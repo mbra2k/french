@@ -1,0 +1,2080 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French Verb Trainer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --surface: #ffffff;
+            --surface-dark: #1f2937;
+            --surface-secondary: #f8fafc;
+            --surface-secondary-dark: #374151;
+            --text: #1f2937;
+            --text-dark: #f9fafb;
+            --text-muted: #6b7280;
+            --text-muted-dark: #9ca3af;
+            --border: #e5e7eb;
+            --border-dark: #4b5563;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --radius: 8px;
+            --radius-lg: 12px;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        
+        [data-theme="dark"] {
+            --surface: var(--surface-dark);
+            --surface-secondary: var(--surface-secondary-dark);
+            --text: var(--text-dark);
+            --text-muted: var(--text-muted-dark);
+            --border: var(--border-dark);
+        }
+        
+        /* Color Themes */
+        [data-color="blue"] { --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #3b82f6; }
+        [data-color="green"] { --primary: #059669; --primary-dark: #047857; --primary-light: #10b981; }
+        [data-color="purple"] { --primary: #7c3aed; --primary-dark: #6d28d9; --primary-light: #8b5cf6; }
+        [data-color="red"] { --primary: #dc2626; --primary-dark: #b91c1c; --primary-light: #ef4444; }
+        [data-color="orange"] { --primary: #ea580c; --primary-dark: #c2410c; --primary-light: #f97316; }
+        [data-color="slate"] { --primary: #475569; --primary-dark: #334155; --primary-light: #64748b; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--surface-secondary);
+            color: var(--text);
+            line-height: 1.6;
+            transition: all 0.2s ease;
+        }
+        
+        /* Header */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            white-space: nowrap;
+            min-height: 44px; /* Mobile touch target */
+        }
+        
+        .btn:hover {
+            background: var(--surface-secondary);
+            border-color: var(--primary);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--text-muted);
+            color: white;
+            border-color: var(--text-muted);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--text);
+            border-color: var(--text);
+        }
+        
+        .btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Color Picker */
+        .color-picker {
+            position: relative;
+        }
+        
+        .color-trigger {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius);
+            background: var(--primary);
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .color-trigger:hover {
+            transform: scale(1.1);
+            border-color: var(--primary);
+        }
+        
+        .color-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 1rem;
+            z-index: 200;
+            display: none;
+        }
+        
+        .color-dropdown.show {
+            display: block;
+        }
+        
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .color-option {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius);
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.active::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .color-blue { background: #2563eb; }
+        .color-green { background: #059669; }
+        .color-purple { background: #7c3aed; }
+        .color-red { background: #dc2626; }
+        .color-orange { background: #ea580c; }
+        .color-slate { background: #475569; }
+        
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .desktop-layout {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .mobile-layout {
+            margin-top: 2rem;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: calc(4rem + 2rem);
+        }
+        
+        .sidebar h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 0.25rem;
+        }
+        
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: var(--radius);
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            min-height: 44px; /* Mobile touch target */
+        }
+        
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .sidebar-stats {
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.25rem 0;
+            font-size: 0.875rem;
+        }
+        
+        .stat-value {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        /* Content */
+        .content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            min-height: 70vh;
+        }
+        
+        .content-header {
+            margin-bottom: 2rem;
+        }
+        
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+        
+        .content-subtitle {
+            color: var(--text-muted);
+        }
+        
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-lg);
+            padding: 3rem 2rem;
+            text-align: center;
+            background: var(--surface-secondary);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            margin: 2rem 0;
+            min-height: 44px; /* Mobile touch target */
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: color-mix(in srgb, var(--primary) 5%, var(--surface-secondary));
+        }
+        
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: color-mix(in srgb, var(--primary) 10%, var(--surface-secondary));
+        }
+        
+        .upload-icon {
+            width: 4rem;
+            height: 4rem;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--text-muted);
+        }
+        
+        .upload-text {
+            font-weight: 600;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .upload-hint {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        /* Settings */
+        .settings-section {
+            margin-bottom: 3rem;
+        }
+        
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+        
+        .word-count-selector {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+        
+        .word-count-btn {
+            padding: 0.75rem 1.25rem;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+            font-weight: 500;
+            min-height: 44px; /* Mobile touch target */
+        }
+        
+        .word-count-btn:hover {
+            border-color: var(--primary);
+        }
+        
+        .word-count-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .mode-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            min-height: 160px;
+        }
+        
+        .mode-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        
+        .mode-icon {
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            background: color-mix(in srgb, var(--primary) 10%, transparent);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+        }
+        
+        .mode-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text);
+        }
+        
+        .mode-description {
+            font-size: 1rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        
+        /* Game */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .timer {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            padding: 0.75rem 1.5rem;
+            background: color-mix(in srgb, var(--primary) 10%, transparent);
+            border-radius: var(--radius);
+        }
+        
+        .timer.warning {
+            color: var(--error);
+            background: color-mix(in srgb, var(--error) 10%, transparent);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .progress {
+            font-weight: 500;
+            color: var(--text-muted);
+            font-size: 1.125rem;
+        }
+        
+        .game-content {
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+        
+        .question {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 3rem;
+            line-height: 1.2;
+        }
+        
+        /* Flashcard */
+        .flashcard-container {
+            perspective: 1000px;
+            width: 100%;
+            max-width: 500px;
+            height: 300px;
+            margin: 0 auto 3rem;
+        }
+        
+        .flashcard {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .flashcard-front {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+        
+        .flashcard-back {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard-word {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+        
+        .flashcard-translation {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+        
+        .flashcard-hint {
+            font-size: 1rem;
+            opacity: 0.8;
+            font-style: italic;
+        }
+        
+        /* Options */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 700px;
+        }
+        
+        .option {
+            padding: 1.5rem;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-weight: 500;
+            font-size: 1.125rem;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .option:hover {
+            border-color: var(--primary);
+            background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+            transform: translateY(-2px);
+        }
+        
+        .option.correct {
+            background: color-mix(in srgb, var(--success) 15%, var(--surface));
+            border-color: var(--success);
+            color: var(--success);
+        }
+        
+        .option.incorrect {
+            background: color-mix(in srgb, var(--error) 15%, var(--surface));
+            border-color: var(--error);
+            color: var(--error);
+        }
+        
+        /* Input */
+        .answer-input {
+            width: 100%;
+            max-width: 500px;
+            padding: 1rem 1.5rem;
+            font-size: 1.25rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-lg);
+            background: var(--surface);
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 2rem;
+            min-height: 60px;
+        }
+        
+        .answer-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent);
+        }
+        
+        /* Controls */
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+        
+        .game-controls .btn {
+            font-size: 1.125rem;
+            padding: 1rem 2rem;
+            min-width: 140px;
+        }
+        
+        /* Feedback */
+        .feedback {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            text-align: center;
+            font-size: 1.25rem;
+        }
+        
+        .feedback.correct {
+            background: color-mix(in srgb, var(--success) 15%, var(--surface));
+            color: var(--success);
+            border: 2px solid color-mix(in srgb, var(--success) 30%, transparent);
+        }
+        
+        .feedback.incorrect {
+            background: color-mix(in srgb, var(--error) 15%, var(--surface));
+            color: var(--error);
+            border: 2px solid color-mix(in srgb, var(--error) 30%, transparent);
+        }
+        
+        /* Messages */
+        .message {
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-lg);
+            margin: 1.5rem 0;
+            font-weight: 500;
+            font-size: 1.125rem;
+        }
+        
+        .message.success {
+            background: color-mix(in srgb, var(--success) 15%, var(--surface));
+            color: var(--success);
+            border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+        }
+        
+        .message.error {
+            background: color-mix(in srgb, var(--error) 15%, var(--surface));
+            color: var(--error);
+            border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
+        }
+        
+        .message.info {
+            background: color-mix(in srgb, var(--primary) 15%, var(--surface));
+            color: var(--primary);
+            border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .desktop-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: static;
+                margin-bottom: 2rem;
+            }
+            
+            .question {
+                font-size: 2rem;
+            }
+            
+            .flashcard-container {
+                height: 250px;
+            }
+            
+            .flashcard-word {
+                font-size: 1.5rem;
+            }
+            
+            .flashcard-translation {
+                font-size: 1.25rem;
+            }
+            
+            .mode-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .options-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .upload-icon {
+                width: 3rem;
+                height: 3rem;
+                font-size: 1.5rem;
+            }
+            
+            .upload-text {
+                font-size: 1.125rem;
+            }
+            
+            .upload-hint {
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .content {
+                padding: 1rem;
+            }
+            
+            .upload-area {
+                padding: 2rem 1rem;
+            }
+            
+            .word-count-selector {
+                justify-content: center;
+            }
+            
+            .question {
+                font-size: 1.75rem;
+            }
+            
+            .flashcard-container {
+                height: 200px;
+            }
+            
+            .flashcard-word {
+                font-size: 1.25rem;
+            }
+            
+            .flashcard-translation {
+                font-size: 1.125rem;
+            }
+            
+            .game-controls {
+                gap: 1rem;
+            }
+            
+            .game-controls .btn {
+                font-size: 1rem;
+                padding: 0.75rem 1.5rem;
+                min-width: 120px;
+            }
+        }
+        
+        /* Hide/Show utilities */
+        .hidden {
+            display: none !important;
+        }
+        
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body data-theme="light" data-color="blue">
+
+<header class="header">
+    <div class="header-content">
+        <a href="#" class="logo" onclick="showScreen('home')">French Verb Trainer</a>
+        
+        <div class="header-controls">
+            <button class="btn active" id="langGerman" onclick="setLanguage('german')">Deutsch</button>
+            <button class="btn" id="langEnglish" onclick="setLanguage('english')">English</button>
+            
+            <button class="btn" id="deviceToggle">
+                <span id="deviceIcon">📱</span>
+                <span id="deviceText">Mobile</span>
+            </button>
+            
+            <button class="btn" id="themeToggle">
+                <span id="themeIcon">🌙</span>
+            </button>
+            
+            <div class="color-picker">
+                <div class="color-trigger" id="colorTrigger"></div>
+                <div class="color-dropdown" id="colorDropdown">
+                    <div class="color-grid">
+                        <div class="color-option color-blue active" data-color="blue"></div>
+                        <div class="color-option color-green" data-color="green"></div>
+                        <div class="color-option color-purple" data-color="purple"></div>
+                        <div class="color-option color-red" data-color="red"></div>
+                        <div class="color-option color-orange" data-color="orange"></div>
+                        <div class="color-option color-slate" data-color="slate"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div id="layout" class="mobile-layout">
+        <!-- Sidebar (Desktop only) -->
+        <aside class="sidebar hidden" id="sidebar">
+            <h3 id="sidebarNavTitle">Navigation</h3>
+            <ul class="sidebar-nav">
+                <li><a href="#" onclick="showScreen('home')" class="active">
+                    <span>📄</span> <span id="navUpload">Upload</span>
+                </a></li>
+                <li><a href="#" onclick="showScreen('settings')">
+                    <span>⚙️</span> <span id="navSettings">Settings</span>
+                </a></li>
+            </ul>
+            
+            <div class="sidebar-stats">
+                <h3 id="sidebarStatsTitle">Statistics</h3>
+                <div class="stat-item">
+                    <span id="statVerbsLoaded">Verbs Loaded</span>
+                    <span class="stat-value" id="verbCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span id="statLanguage">Language</span>
+                    <span class="stat-value" id="currentLang">German</span>
+                </div>
+                <div class="stat-item">
+                    <span id="statMode">Mode</span>
+                    <span class="stat-value" id="currentMode">Mobile</span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Home Screen -->
+            <div id="home" class="screen">
+                <div class="content-header">
+                    <h1 class="content-title" id="homeTitle">French Verb Trainer</h1>
+                    <p class="content-subtitle" id="homeSubtitle">Upload your Excel file to start learning French verbs and conjugations</p>
+                </div>
+                
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text" id="uploadText">Upload Excel File</div>
+                    <div class="upload-hint" id="uploadHint">Click here or drag and drop your .xlsx or .xls file</div>
+                    <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+                    <div style="margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="chooseFileBtn">Choose File</button>
+                        <button class="btn" onclick="downloadTemplate()" id="downloadTemplateBtn">Download Template</button>
+                    </div>
+                </div>
+                
+                <div id="messageArea"></div>
+            </div>
+            
+            <!-- Settings Screen -->
+            <div id="settings" class="screen hidden">
+                <div class="content-header">
+                    <h1 class="content-title" id="settingsTitle">Learning Settings</h1>
+                    <p class="content-subtitle" id="settingsSubtitle">Configure your learning session</p>
+                </div>
+                
+                <div class="settings-section">
+                    <h2 class="section-title" id="wordsPerSessionTitle">Words per Session</h2>
+                    <div class="word-count-selector">
+                        <button class="word-count-btn" data-count="5">5</button>
+                        <button class="word-count-btn active" data-count="10">10</button>
+                        <button class="word-count-btn" data-count="15">15</button>
+                        <button class="word-count-btn" data-count="20">20</button>
+                        <button class="word-count-btn" data-count="25">25</button>
+                        <button class="word-count-btn" data-count="30">30</button>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2 class="section-title" id="vocabModesTitle">Vocabulary Modes</h2>
+                    <div class="mode-grid">
+                        <div class="mode-card" onclick="startMode('flashcard')">
+                            <div class="mode-icon">🃏</div>
+                            <div class="mode-title" id="flashcardTitle">Flashcards</div>
+                            <div class="mode-description" id="flashcardDesc">Learn French-German/English translations at your own pace</div>
+                        </div>
+                        <div class="mode-card" onclick="startMode('quiz')">
+                            <div class="mode-icon">❓</div>
+                            <div class="mode-title" id="vocabQuizTitle">Vocabulary Quiz</div>
+                            <div class="mode-description" id="vocabQuizDesc">Multiple choice questions with timer</div>
+                        </div>
+                        <div class="mode-card" onclick="startMode('writing')">
+                            <div class="mode-icon">✍️</div>
+                            <div class="mode-title" id="writingTitle">Writing Practice</div>
+                            <div class="mode-description" id="writingDesc">Type the correct translations</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2 class="section-title" id="conjModesTitle">Conjugation Modes</h2>
+                    <div class="mode-grid">
+                        <div class="mode-card" onclick="startMode('conjugation-flashcard')">
+                            <div class="mode-icon">🔄</div>
+                            <div class="mode-title" id="conjFlashcardTitle">Conjugation Cards</div>
+                            <div class="mode-description" id="conjFlashcardDesc">Verb + Pronoun → Conjugated form</div>
+                        </div>
+                        <div class="mode-card" onclick="startMode('conjugation-quiz')">
+                            <div class="mode-icon">🎯</div>
+                            <div class="mode-title" id="conjQuizTitle">Conjugation Quiz</div>
+                            <div class="mode-description" id="conjQuizDesc">Multiple choice for verb forms</div>
+                        </div>
+                        <div class="mode-card" onclick="startMode('conjugation-writing')">
+                            <div class="mode-icon">📝</div>
+                            <div class="mode-title" id="conjWritingTitle">Conjugation Writing</div>
+                            <div class="mode-description" id="conjWritingDesc">Type correct verb forms</div>
+                        </div>
+                        <div class="mode-card" onclick="startMode('conjugation-complete')">
+                            <div class="mode-icon">📋</div>
+                            <div class="mode-title" id="conjCompleteTitle">Complete Conjugation</div>
+                            <div class="mode-description" id="conjCompleteDesc">View all forms of a verb</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Game Screen -->
+            <div id="game" class="screen hidden">
+                <div class="game-header">
+                    <div class="timer hidden" id="timer">⏱️ 0:30</div>
+                    <div class="progress" id="progress">Question 1 of 10</div>
+                    <button class="btn" onclick="exitGame()" id="exitBtn">Exit</button>
+                </div>
+                
+                <div class="game-content" id="gameContent"></div>
+                <div class="game-controls" id="gameControls"></div>
+            </div>
+            
+            <!-- Results Screen -->
+            <div id="results" class="screen hidden">
+                <div class="content-header">
+                    <h1 class="content-title" id="resultsTitle">Results</h1>
+                </div>
+                
+                <div id="resultsContent"></div>
+                
+                <div class="game-controls">
+                    <button class="btn btn-primary" onclick="showScreen('settings')" id="newSessionBtn">New Session</button>
+                    <button class="btn" onclick="showScreen('home')" id="backHomeBtn">Back to Home</button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+// Translation system
+const translations = {
+    german: {
+        homeTitle: 'French Verb Trainer',
+        homeSubtitle: 'Lade deine Excel-Datei hoch um französische Verben und Konjugationen zu lernen',
+        uploadText: 'Excel-Datei hochladen',
+        uploadHint: 'Klicke hier oder ziehe deine .xlsx oder .xls Datei hierher',
+        chooseFileBtn: 'Datei wählen',
+        downloadTemplateBtn: 'Vorlage downloaden',
+        settingsTitle: 'Lerneinstellungen',
+        settingsSubtitle: 'Konfiguriere deine Lernsession',
+        wordsPerSessionTitle: 'Wörter pro Session',
+        vocabModesTitle: 'Vokabel-Modi',
+        conjModesTitle: 'Konjugations-Modi',
+        flashcardTitle: 'Karteikarten',
+        flashcardDesc: 'Lerne Französisch-Deutsche Übersetzungen in deinem Tempo',
+        vocabQuizTitle: 'Vokabel-Quiz',
+        vocabQuizDesc: 'Multiple Choice Fragen mit Timer',
+        writingTitle: 'Schreib-Übung',
+        writingDesc: 'Tippe die korrekten Übersetzungen',
+        conjFlashcardTitle: 'Konjugations-Karten',
+        conjFlashcardDesc: 'Verb + Pronomen → Konjugierte Form',
+        conjQuizTitle: 'Konjugations-Quiz',
+        conjQuizDesc: 'Multiple Choice für Verbformen',
+        conjWritingTitle: 'Konjugations-Schreiben',
+        conjWritingDesc: 'Tippe korrekte Verbformen',
+        conjCompleteTitle: 'Vollständige Konjugation',
+        conjCompleteDesc: 'Alle Formen eines Verbs ansehen',
+        resultsTitle: 'Ergebnisse',
+        newSessionBtn: 'Neue Session',
+        backHomeBtn: 'Zurück zum Start',
+        exitBtn: 'Beenden',
+        clickToFlip: 'Klicke zum Umdrehen',
+        known: 'Gewusst',
+        review: 'Wiederholen',
+        correct: 'Richtig!',
+        incorrect: 'Falsch!',
+        check: 'Prüfen',
+        skip: 'Überspringen',
+        learned: 'Gelernt',
+        showAgain: 'Nochmal zeigen',
+        excellent: 'Ausgezeichnet! 🎉',
+        good: 'Gut gemacht! 👍',
+        practice: 'Weiter üben! 💪',
+        verbsLoaded: 'Verben erfolgreich geladen!',
+        noVerbs: 'Keine gültigen Verben gefunden!',
+        fileError: 'Fehler beim Lesen der Datei:',
+        reading: 'Datei wird gelesen...',
+        wrongFile: 'Bitte wähle eine XLSX oder XLS Datei!',
+        mobile: 'Mobil',
+        desktop: 'Desktop',
+        sidebarNavTitle: 'Navigation',
+        navUpload: 'Upload',
+        navSettings: 'Einstellungen',
+        sidebarStatsTitle: 'Statistiken',
+        statVerbsLoaded: 'Verben geladen',
+        statLanguage: 'Sprache',
+        statMode: 'Modus',
+        german: 'Deutsch',
+        english: 'Englisch',
+        timeUp: 'Zeit abgelaufen! Richtig:',
+        enterTranslation: 'Übersetzung eingeben...',
+        enterConjugation: 'Konjugation eingeben...'
+    },
+    english: {
+        homeTitle: 'French Verb Trainer',
+        homeSubtitle: 'Upload your Excel file to start learning French verbs and conjugations',
+        uploadText: 'Upload Excel File',
+        uploadHint: 'Click here or drag and drop your .xlsx or .xls file',
+        chooseFileBtn: 'Choose File',
+        downloadTemplateBtn: 'Download Template',
+        settingsTitle: 'Learning Settings',
+        settingsSubtitle: 'Configure your learning session',
+        wordsPerSessionTitle: 'Words per Session',
+        vocabModesTitle: 'Vocabulary Modes',
+        conjModesTitle: 'Conjugation Modes',
+        flashcardTitle: 'Flashcards',
+        flashcardDesc: 'Learn French-English translations at your own pace',
+        vocabQuizTitle: 'Vocabulary Quiz',
+        vocabQuizDesc: 'Multiple choice questions with timer',
+        writingTitle: 'Writing Practice',
+        writingDesc: 'Type the correct translations',
+        conjFlashcardTitle: 'Conjugation Cards',
+        conjFlashcardDesc: 'Verb + Pronoun → Conjugated form',
+        conjQuizTitle: 'Conjugation Quiz',
+        conjQuizDesc: 'Multiple choice for verb forms',
+        conjWritingTitle: 'Conjugation Writing',
+        conjWritingDesc: 'Type correct verb forms',
+        conjCompleteTitle: 'Complete Conjugation',
+        conjCompleteDesc: 'View all forms of a verb',
+        resultsTitle: 'Results',
+        newSessionBtn: 'New Session',
+        backHomeBtn: 'Back to Home',
+        exitBtn: 'Exit',
+        clickToFlip: 'Click to flip',
+        known: 'Known',
+        review: 'Review',
+        correct: 'Correct!',
+        incorrect: 'Wrong!',
+        check: 'Check',
+        skip: 'Skip',
+        learned: 'Learned',
+        showAgain: 'Show Again',
+        excellent: 'Excellent! 🎉',
+        good: 'Good job! 👍',
+        practice: 'Keep practicing! 💪',
+        verbsLoaded: 'verbs loaded successfully!',
+        noVerbs: 'No valid verbs found!',
+        fileError: 'Error reading file:',
+        reading: 'Reading file...',
+        wrongFile: 'Please choose an XLSX or XLS file!',
+        mobile: 'Mobile',
+        desktop: 'Desktop',
+        sidebarNavTitle: 'Navigation',
+        navUpload: 'Upload',
+        navSettings: 'Settings',
+        sidebarStatsTitle: 'Statistics',
+        statVerbsLoaded: 'Verbs Loaded',
+        statLanguage: 'Language',
+        statMode: 'Mode',
+        german: 'German',
+        english: 'English',
+        timeUp: 'Time\'s up! Correct:',
+        enterTranslation: 'Enter translation...',
+        enterConjugation: 'Enter conjugation...'
+    }
+};
+
+// Global state
+const state = {
+    vocabulary: [],
+    language: 'german',
+    theme: 'light',
+    color: 'blue',
+    deviceMode: 'mobile',
+    wordCount: 10,
+    gameMode: null,
+    currentIndex: 0,
+    sessionWords: [],
+    results: [],
+    timer: null,
+    timeLeft: 30
+};
+
+// Initialize app
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+function initializeApp() {
+    console.log('Initializing French Verb Trainer...');
+    
+    setupEventListeners();
+    loadSettings();
+    updateUI();
+    updateStats();
+    
+    console.log('App initialized successfully');
+}
+
+function setupEventListeners() {
+    // Device toggle
+    document.getElementById('deviceToggle').addEventListener('click', toggleDeviceMode);
+    
+    // Theme toggle
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+    
+    // Color picker
+    document.getElementById('colorTrigger').addEventListener('click', toggleColorPicker);
+    document.querySelectorAll('.color-option').forEach(option => {
+        option.addEventListener('click', () => setColor(option.dataset.color));
+    });
+    
+    // Close color picker when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.color-picker')) {
+            document.getElementById('colorDropdown').classList.remove('show');
+        }
+    });
+    
+    // Word count selector
+    document.querySelectorAll('.word-count-btn').forEach(btn => {
+        btn.addEventListener('click', () => setWordCount(parseInt(btn.dataset.count)));
+    });
+    
+    // File upload
+    document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+    
+    // Drag and drop
+    const uploadArea = document.querySelector('.upload-area');
+    uploadArea.addEventListener('dragover', handleDragOver);
+    uploadArea.addEventListener('dragleave', handleDragLeave);
+    uploadArea.addEventListener('drop', handleDrop);
+}
+
+// LANGUAGE FUNCTIONS
+function setLanguage(lang) {
+    console.log('Setting language to:', lang);
+    state.language = lang;
+    
+    // Update button states
+    document.getElementById('langGerman').classList.toggle('active', lang === 'german');
+    document.getElementById('langEnglish').classList.toggle('active', lang === 'english');
+    
+    // Update all UI text
+    updateUI();
+    updateStats();
+    saveSettings();
+}
+
+function updateUI() {
+    const t = translations[state.language];
+    
+    // Update all translatable elements
+    const elementsToUpdate = [
+        'homeTitle', 'homeSubtitle', 'uploadText', 'uploadHint', 'chooseFileBtn', 'downloadTemplateBtn',
+        'settingsTitle', 'settingsSubtitle', 'wordsPerSessionTitle', 'vocabModesTitle', 'conjModesTitle',
+        'flashcardTitle', 'flashcardDesc', 'vocabQuizTitle', 'vocabQuizDesc', 'writingTitle', 'writingDesc',
+        'conjFlashcardTitle', 'conjFlashcardDesc', 'conjQuizTitle', 'conjQuizDesc', 'conjWritingTitle', 'conjWritingDesc',
+        'conjCompleteTitle', 'conjCompleteDesc', 'resultsTitle', 'newSessionBtn', 'backHomeBtn', 'exitBtn',
+        'sidebarNavTitle', 'navUpload', 'navSettings', 'sidebarStatsTitle', 'statVerbsLoaded', 'statLanguage', 'statMode'
+    ];
+    
+    elementsToUpdate.forEach(id => {
+        const element = document.getElementById(id);
+        if (element && t[id]) {
+            element.textContent = t[id];
+        }
+    });
+}
+
+function toggleDeviceMode() {
+    state.deviceMode = state.deviceMode === 'mobile' ? 'desktop' : 'mobile';
+    
+    const layout = document.getElementById('layout');
+    const sidebar = document.getElementById('sidebar');
+    const deviceIcon = document.getElementById('deviceIcon');
+    const deviceText = document.getElementById('deviceText');
+    
+    if (state.deviceMode === 'desktop') {
+        layout.className = 'desktop-layout';
+        sidebar.classList.remove('hidden');
+        deviceIcon.textContent = '🖥️';
+        deviceText.textContent = translations[state.language].desktop;
+    } else {
+        layout.className = 'mobile-layout';
+        sidebar.classList.add('hidden');
+        deviceIcon.textContent = '📱';
+        deviceText.textContent = translations[state.language].mobile;
+    }
+    
+    updateStats();
+    saveSettings();
+}
+
+function toggleTheme() {
+    state.theme = state.theme === 'light' ? 'dark' : 'light';
+    
+    document.body.setAttribute('data-theme', state.theme);
+    document.getElementById('themeIcon').textContent = state.theme === 'dark' ? '☀️' : '🌙';
+    
+    saveSettings();
+}
+
+function toggleColorPicker() {
+    document.getElementById('colorDropdown').classList.toggle('show');
+}
+
+function setColor(color) {
+    state.color = color;
+    
+    document.body.setAttribute('data-color', color);
+    
+    document.querySelectorAll('.color-option').forEach(option => {
+        option.classList.toggle('active', option.dataset.color === color);
+    });
+    
+    document.getElementById('colorDropdown').classList.remove('show');
+    saveSettings();
+}
+
+function setWordCount(count) {
+    state.wordCount = count;
+    
+    document.querySelectorAll('.word-count-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.count) === count);
+    });
+    
+    saveSettings();
+}
+
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (file) processFile(file);
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.currentTarget.classList.add('dragover');
+}
+
+function handleDragLeave(event) {
+    event.currentTarget.classList.remove('dragover');
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('dragover');
+    
+    const file = event.dataTransfer.files[0];
+    if (file) processFile(file);
+}
+
+function processFile(file) {
+    if (!file.name.match(/\.(xlsx|xls)$/i)) {
+        showMessage(translations[state.language].wrongFile, 'error');
+        return;
+    }
+    
+    showMessage(translations[state.language].reading, 'info');
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            
+            const verbs = parseVerbData(rows);
+            
+            if (verbs.length > 0) {
+                state.vocabulary = verbs;
+                showMessage(`${verbs.length} ${translations[state.language].verbsLoaded}`, 'success');
+                updateStats();
+                setTimeout(() => showScreen('settings'), 2000);
+            } else {
+                showMessage(translations[state.language].noVerbs, 'error');
+            }
+        } catch (error) {
+            console.error('File processing error:', error);
+            showMessage(`${translations[state.language].fileError} ${error.message}`, 'error');
+        }
+    };
+    
+    reader.readAsArrayBuffer(file);
+}
+
+function parseVerbData(rows) {
+    const verbs = [];
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        
+        if (!row || row.length === 0) continue;
+        
+        const frenchVerb = row[0] ? row[0].toString().trim() : '';
+        const germanTranslation = row[1] ? row[1].toString().trim() : '';
+        
+        // Skip header rows and category rows
+        if (!frenchVerb || 
+            frenchVerb.includes('Liste de cent') ||
+            frenchVerb === 'Verbe' ||
+            frenchVerb.includes('Verbes avec') ||
+            !germanTranslation ||
+            germanTranslation === 'Traduccion') {
+            continue;
+        }
+        
+        // Extract conjugations
+        const conjugations = {
+            je: row[3] ? row[3].toString().trim() : '',
+            tu: row[4] ? row[4].toString().trim() : '',
+            il_elle: row[5] ? row[5].toString().trim() : '',
+            nous: row[6] ? row[6].toString().trim() : '',
+            vous: row[7] ? row[7].toString().trim() : '',
+            ils_elles: row[8] ? row[8].toString().trim() : ''
+        };
+        
+        // Only add if at least one conjugation exists
+        if (Object.values(conjugations).some(conj => conj)) {
+            verbs.push({
+                french_verb: frenchVerb,
+                german_translation: germanTranslation,
+                english_translation: '', // Can be added later
+                ...conjugations
+            });
+        }
+    }
+    
+    console.log(`Parsed ${verbs.length} verbs from file`);
+    return verbs;
+}
+
+function downloadTemplate() {
+    const template = [
+        ['french_verb', 'german_translation', '', 'je', 'tu', 'il_elle', 'nous', 'vous', 'ils_elles'],
+        ['aimer', 'lieben', '', 'aime', 'aimes', 'aime', 'aimons', 'aimez', 'aiment'],
+        ['parler', 'sprechen', '', 'parle', 'parles', 'parle', 'parlons', 'parlez', 'parlent'],
+        ['être', 'sein', '', 'suis', 'es', 'est', 'sommes', 'êtes', 'sont'],
+        ['avoir', 'haben', '', 'ai', 'as', 'a', 'avons', 'avez', 'ont']
+    ];
+    
+    const worksheet = XLSX.utils.aoa_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Verbs');
+    XLSX.writeFile(workbook, 'french_verbs_template.xlsx');
+}
+
+function showMessage(text, type) {
+    const messageArea = document.getElementById('messageArea');
+    messageArea.innerHTML = `<div class="message ${type}">${text}</div>`;
+    
+    // Auto-hide success and info messages
+    if (type === 'success' || type === 'info') {
+        setTimeout(() => {
+            messageArea.innerHTML = '';
+        }, 5000);
+    }
+}
+
+function showScreen(screenId) {
+    // Hide all screens
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.add('hidden');
+    });
+    
+    // Show selected screen
+    document.getElementById(screenId).classList.remove('hidden');
+    
+    // Update sidebar navigation
+    document.querySelectorAll('.sidebar-nav a').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    const activeLink = document.querySelector(`.sidebar-nav a[onclick*="${screenId}"]`);
+    if (activeLink) {
+        activeLink.classList.add('active');
+    }
+}
+
+function startMode(mode) {
+    if (state.vocabulary.length === 0) {
+        showMessage('Please upload verbs first!', 'error');
+        return;
+    }
+    
+    state.gameMode = mode;
+    state.currentIndex = 0;
+    state.results = [];
+    state.sessionWords = shuffleArray([...state.vocabulary]).slice(0, state.wordCount);
+    
+    showScreen('game');
+    
+    switch (mode) {
+        case 'flashcard':
+            startFlashcardMode();
+            break;
+        case 'quiz':
+            startQuizMode();
+            break;
+        case 'writing':
+            startWritingMode();
+            break;
+        case 'conjugation-flashcard':
+            startConjugationFlashcardMode();
+            break;
+        case 'conjugation-quiz':
+            startConjugationQuizMode();
+            break;
+        case 'conjugation-writing':
+            startConjugationWritingMode();
+            break;
+        case 'conjugation-complete':
+            startCompleteConjugationMode();
+            break;
+        default:
+            console.error('Unknown mode:', mode);
+    }
+}
+
+// GAME MODES
+function startFlashcardMode() {
+    updateProgress();
+    showFlashcard();
+}
+
+function showFlashcard() {
+    const word = state.sessionWords[state.currentIndex];
+    const translation = getTranslation(word);
+    const t = translations[state.language];
+    
+    document.getElementById('gameContent').innerHTML = `
+        <div class="flashcard-container">
+            <div class="flashcard" id="flashcard" onclick="flipCard()">
+                <div class="flashcard-face flashcard-front">
+                    <div class="flashcard-word">${word.french_verb}</div>
+                    <div class="flashcard-hint">${t.clickToFlip}</div>
+                </div>
+                <div class="flashcard-face flashcard-back">
+                    <div class="flashcard-translation">${translation}</div>
+                    <div class="flashcard-hint">${word.french_verb}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('gameControls').innerHTML = `
+        <button class="btn btn-primary" onclick="markFlashcard(true)">✓ ${t.known}</button>
+        <button class="btn btn-secondary" onclick="markFlashcard(false)">✗ ${t.review}</button>
+    `;
+}
+
+function flipCard() {
+    document.getElementById('flashcard').classList.toggle('flipped');
+}
+
+function markFlashcard(correct) {
+    state.results.push(correct);
+    const t = translations[state.language];
+    showFeedback(correct ? t.correct : t.incorrect, correct ? 'correct' : 'incorrect');
+    
+    setTimeout(() => {
+        nextQuestion();
+    }, 1500);
+}
+
+function startQuizMode() {
+    document.getElementById('timer').classList.remove('hidden');
+    updateProgress();
+    showQuizQuestion();
+}
+
+function showQuizQuestion() {
+    const word = state.sessionWords[state.currentIndex];
+    const correct = getTranslation(word);
+    
+    const others = state.vocabulary
+        .filter(w => w !== word)
+        .map(w => getTranslation(w))
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 3);
+    
+    const options = shuffleArray([correct, ...others]);
+    
+    document.getElementById('gameContent').innerHTML = `
+        <div class="question">${word.french_verb}</div>
+        <div class="options-grid">
+            ${options.map(option => 
+                `<div class="option" onclick="selectAnswer('${escapeHtml(option)}', '${escapeHtml(correct)}')">${option}</div>`
+            ).join('')}
+        </div>
+        <div id="feedback" class="hidden"></div>
+    `;
+    
+    startTimer();
+}
+
+function startTimer() {
+    state.timeLeft = 30;
+    updateTimer();
+    
+    state.timer = setInterval(() => {
+        state.timeLeft--;
+        updateTimer();
+        
+        if (state.timeLeft <= 0) {
+            clearInterval(state.timer);
+            selectAnswer('', getCurrentCorrect());
+        }
+    }, 1000);
+}
+
+function updateTimer() {
+    const minutes = Math.floor(state.timeLeft / 60);
+    const seconds = state.timeLeft % 60;
+    const timerElement = document.getElementById('timer');
+    
+    timerElement.textContent = `⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    timerElement.classList.toggle('warning', state.timeLeft <= 10);
+}
+
+function selectAnswer(selected, correct) {
+    clearInterval(state.timer);
+    
+    const options = document.querySelectorAll('.option');
+    options.forEach(option => {
+        option.style.pointerEvents = 'none';
+        
+        if (option.textContent === selected && selected !== correct) {
+            option.classList.add('incorrect');
+        }
+        if (option.textContent === correct) {
+            option.classList.add('correct');
+        }
+    });
+    
+    const isCorrect = selected === correct;
+    state.results.push(isCorrect);
+    
+    const t = translations[state.language];
+    const message = isCorrect ? 
+        t.correct : 
+        selected === '' ? 
+            `${t.timeUp} ${correct}` : 
+            `${t.incorrect} ${correct}`;
+    
+    showFeedback(message, isCorrect ? 'correct' : 'incorrect');
+    
+    setTimeout(() => {
+        nextQuestion();
+    }, 2000);
+}
+
+function startWritingMode() {
+    updateProgress();
+    showWritingQuestion();
+}
+
+function showWritingQuestion() {
+    const word = state.sessionWords[state.currentIndex];
+    const t = translations[state.language];
+    
+    document.getElementById('gameContent').innerHTML = `
+        <div class="question">${word.french_verb}</div>
+        <input type="text" class="answer-input" id="answerInput" placeholder="${t.enterTranslation}">
+        <div id="feedback" class="hidden"></div>
+    `;
+    
+    document.getElementById('gameControls').innerHTML = `
+        <button class="btn btn-primary" onclick="checkAnswer()">${t.check}</button>
+        <button class="btn btn-secondary" onclick="skipQuestion()">${t.skip}</button>
+    `;
+    
+    const input = document.getElementById('answerInput');
+    input.focus();
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
+}
+
+function checkAnswer() {
+    const input = document.getElementById('answerInput');
+    const answer = input.value.trim().toLowerCase();
+    const word = state.sessionWords[state.currentIndex];
+    const correct = getTranslation(word).toLowerCase();
+    
+    const isCorrect = answer === correct;
+    state.results.push(isCorrect);
+    input.disabled = true;
+    
+    const t = translations[state.language];
+    const message = isCorrect ? 
+        t.correct : 
+        `${t.incorrect} ${getTranslation(word)}`;
+    
+    showFeedback(message, isCorrect ? 'correct' : 'incorrect');
+    
+    setTimeout(() => {
+        nextQuestion();
+    }, 2000);
+}
+
+function skipQuestion() {
+    state.results.push(false);
+    nextQuestion();
+}
+
+// Conjugation modes
+function startConjugationFlashcardMode() {
+    updateProgress();
+    showConjugationFlashcard();
+}
+
+function showConjugationFlashcard() {
+    const word = state.sessionWords[state.currentIndex];
+    const pronouns = ['je', 'tu', 'il_elle', 'nous', 'vous', 'ils_elles'];
+    const pronoun = pronouns[Math.floor(Math.random() * pronouns.length)];
+    const correct = word[pronoun];
+    
+    const pronounDisplay = {
+        je: 'je', tu: 'tu', il_elle: 'il/elle',
+        nous: 'nous', vous: 'vous', ils_elles: 'ils/elles'
+    };
+    
+    const t = translations[state.language];
+    
+    document.getElementById('gameContent').innerHTML = `
+        <div class="flashcard-container">
+            <div class="flashcard" id="conjugationFlashcard" onclick="flipConjugationCard()">
+                <div class="flashcard-face flashcard-front">
+                    <div class="flashcard-word">${word.french_verb} + ${pronounDisplay[pronoun]} = ?</div>
+                    <div class="flashcard-hint">${t.clickToFlip}</div>
+                </div>
+                <div class="flashcard-face flashcard-back">
+                    <div class="flashcard-translation">${correct}</div>
+                    <div class="flashcard-hint">${word.french_verb} + ${pronounDisplay[pronoun]}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('gameControls').innerHTML = `
+        <button class="btn btn-primary" onclick="markConjugationFlashcard(true)">✓ ${t.known}</button>
+        <button class="btn btn-secondary" onclick="markConjugationFlashcard(false)">✗ ${t.review}</button>
+    `;
+}
+
+function flipConjugationCard() {
+    document.getElementById('conjugationFlashcard').classList.toggle('flipped');
+}
+
+function markConjugationFlashcard(correct) {
+    state.results.push(correct);
+    const t = translations[state.language];
+    showFeedback(correct ? t.correct : t.incorrect, correct ? 'correct' : 'incorrect');
+    
+    setTimeout(() => {
+        nextQuestion();
+    }, 1500);
+}
+
+function startConjugationQuizMode() {
+    document.getElementById('timer').classList.remove('hidden');
+    updateProgress();
+    showConjugationQuizQuestion();
+}
+
+function showConjugationQuizQuestion() {
+    const word = state.sessionWords[state.currentIndex];
+    const pronouns = ['je', 'tu', 'il_elle', 'nous', 'vous', 'ils_elles'];
+    const pronoun = pronouns[Math.floor(Math.random() * pronouns.length)];
+    const correct = word[pronoun];
+    
+    const pronounDisplay = {
+        je: 'je', tu: 'tu', il_elle: 'il/elle',
+        nous: 'nous', vous: 'vous', ils_elles: 'ils/elles'
+    };
+    
+    // Generate wrong options
+    const wrongOptions = [];
+    
+    // Add other conjugations from same verb
+    pronouns.forEach(p => {
+        if (p !== pronoun && word[p] && word[p] !== correct) {
+            wrongOptions.push(word[p]);
+        }
+    });
+    
+    // Add conjugations from other verbs
+    state.vocabulary.filter(v => v !== word).forEach(v => {
+        if (v[pronoun] && v[pronoun] !== correct) {
+            wrongOptions.push(v[pronoun]);
+        }
+    });
+    
+    const selectedWrong = wrongOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
+    const options = shuffleArray([correct, ...selectedWrong]);
+    
+    document.getElementById('gameContent').innerHTML = `
+        <div class="question">${word.french_verb} + ${pronounDisplay[pronoun]} = ?</div>
+        <div class="options-grid">
+            ${options.map(option => 
+                `<div class="option" onclick="selectAnswer('${escapeHtml(option)}', '${escapeHtml(correct)}')">${option}</div>`
+            ).join('')}
+        </div>
+        <div id="feedback" class="hidden"></div>
+    `;
+    
+    startTimer();
+}
+
+function startConjugationWritingMode() {
+    updateProgress();
+    showConjugationWritingQuestion();
+}
+
+function showConjugationWritingQuestion() {
+    const word = state.sessionWords[state.currentIndex];
+    const pronouns = ['je', 'tu', 'il_elle', 'nous', 'vous', 'ils_elles'];
+    const pronoun = pronouns[Math.floor(Math.random() * pronouns.length)];
+    const correct = word[pronoun];
+    
+    const pronounDisplay = {
+        je: 'je', tu: 'tu', il_elle: 'il/elle',
+        nous: 'nous', vous: 'vous', ils_elles: 'ils/elles'
+    };
+    
+    const t = translations[state.language];
+    
+    document.getElementById('gameContent').innerHTML = `
+        <div class="question">${word.french_verb} + ${pronounDisplay[pronoun]} = ?</div>
+        <input type="text" class="answer-input" id="conjInput" placeholder="${t.enterConjugation}">
+        <div id="feedback" class="hidden"></div>
+    `;
+    
+    document.getElementById('gameControls').innerHTML = `
+        <button class="btn btn-primary" onclick="checkConjugation('${escapeHtml(correct)}')">${t.check}</button>
+        <button class="btn btn-secondary" onclick="skipQuestion()">${t.skip}</button>
+    `;
+    
+    const input = document.getElementById('conjInput');
+    input.focus();
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkConjugation(correct);
+    });
+}
+
+function checkConjugation(correct) {
+    const input = document.getElementById('conjInput');
+    const answer = input.value.trim().toLowerCase();
+    const isCorrect = answer === correct.toLowerCase();
+    
+    state.results.push(isCorrect);
+    input.disabled = true;
+    
+    const t = translations[state.language];
+    const message = isCorrect ? t.correct : `${t.incorrect} ${correct}`;
+    showFeedback(message, isCorrect ? 'correct' : 'incorrect');
+    
+    setTimeout(() => {
+        nextQuestion();
+    }, 2000);
+}
+
+function startCompleteConjugationMode() {
+    updateProgress();
+    showCompleteConjugation();
+}
+
+function showCompleteConjugation() {
+    const word = state.sessionWords[state.currentIndex];
+    const t = translations[state.language];
+    
+    document.getElementById('gameContent').innerHTML = `
+        <div class="question" style="font-size: 1.75rem; margin-bottom: 2rem;">${t.conjCompleteTitle}</div>
+        <div style="background: var(--surface-secondary); border-radius: var(--radius-lg); padding: 2.5rem; margin: 2rem auto; max-width: 600px;">
+            <h3 style="text-align: center; margin-bottom: 2rem; color: var(--primary); font-size: 1.5rem;">${word.french_verb} <span style="color: var(--text-muted);">(${getTranslation(word)})</span></h3>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                <div style="text-align: center; padding: 1.5rem; background: var(--surface); border-radius: var(--radius-lg); border: 2px solid var(--border); min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-weight: bold; color: var(--primary); margin-bottom: 0.75rem; font-size: 1.125rem;">je</div>
+                    <div style="font-size: 1.25rem;">${word.je}</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: var(--surface); border-radius: var(--radius-lg); border: 2px solid var(--border); min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-weight: bold; color: var(--primary); margin-bottom: 0.75rem; font-size: 1.125rem;">tu</div>
+                    <div style="font-size: 1.25rem;">${word.tu}</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: var(--surface); border-radius: var(--radius-lg); border: 2px solid var(--border); min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-weight: bold; color: var(--primary); margin-bottom: 0.75rem; font-size: 1.125rem;">il/elle</div>
+                    <div style="font-size: 1.25rem;">${word.il_elle}</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: var(--surface); border-radius: var(--radius-lg); border: 2px solid var(--border); min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-weight: bold; color: var(--primary); margin-bottom: 0.75rem; font-size: 1.125rem;">nous</div>
+                    <div style="font-size: 1.25rem;">${word.nous}</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: var(--surface); border-radius: var(--radius-lg); border: 2px solid var(--border); min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-weight: bold; color: var(--primary); margin-bottom: 0.75rem; font-size: 1.125rem;">vous</div>
+                    <div style="font-size: 1.25rem;">${word.vous}</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: var(--surface); border-radius: var(--radius-lg); border: 2px solid var(--border); min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-weight: bold; color: var(--primary); margin-bottom: 0.75rem; font-size: 1.125rem;">ils/elles</div>
+                    <div style="font-size: 1.25rem;">${word.ils_elles}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('gameControls').innerHTML = `
+        <button class="btn btn-primary" onclick="markComplete(true)">✓ ${t.learned}</button>
+        <button class="btn btn-secondary" onclick="markComplete(false)">✗ ${t.showAgain}</button>
+    `;
+}
+
+function markComplete(correct) {
+    state.results.push(correct);
+    const t = translations[state.language];
+    showFeedback(correct ? t.correct : t.incorrect, correct ? 'correct' : 'incorrect');
+    
+    setTimeout(() => {
+        nextQuestion();
+    }, 1500);
+}
+
+// NAVIGATION FUNCTIONS
+function nextQuestion() {
+    state.currentIndex++;
+    
+    if (state.currentIndex >= state.sessionWords.length) {
+        endSession();
+        return;
+    }
+    
+    updateProgress();
+    
+    // Continue with the same mode
+    switch (state.gameMode) {
+        case 'flashcard':
+            showFlashcard();
+            break;
+        case 'quiz':
+            showQuizQuestion();
+            break;
+        case 'writing':
+            showWritingQuestion();
+            break;
+        case 'conjugation-flashcard':
+            showConjugationFlashcard();
+            break;
+        case 'conjugation-quiz':
+            showConjugationQuizQuestion();
+            break;
+        case 'conjugation-writing':
+            showConjugationWritingQuestion();
+            break;
+        case 'conjugation-complete':
+            showCompleteConjugation();
+            break;
+        default:
+            console.error('Unknown game mode:', state.gameMode);
+    }
+}
+
+function updateProgress() {
+    const progress = document.getElementById('progress');
+    const t = translations[state.language];
+    const text = state.language === 'german' 
+        ? `Frage ${state.currentIndex + 1} von ${state.sessionWords.length}`
+        : `Question ${state.currentIndex + 1} of ${state.sessionWords.length}`;
+    progress.textContent = text;
+}
+
+function endSession() {
+    clearInterval(state.timer);
+    document.getElementById('timer').classList.add('hidden');
+    
+    const correct = state.results.filter(r => r).length;
+    const total = state.results.length;
+    const percentage = Math.round((correct / total) * 100);
+    
+    const t = translations[state.language];
+    let message = '';
+    if (percentage >= 80) message = t.excellent;
+    else if (percentage >= 60) message = t.good;
+    else message = t.practice;
+    
+    document.getElementById('resultsContent').innerHTML = `
+        <div style="text-align: center; padding: 3rem 0;">
+            <div style="font-size: 4rem; margin-bottom: 1.5rem; color: var(--primary); font-weight: 700;">${percentage}%</div>
+            <div style="font-size: 1.5rem; margin-bottom: 2.5rem; color: var(--text);">
+                ${correct} ${state.language === 'german' ? 'von' : 'of'} ${total} ${state.language === 'german' ? 'richtig' : 'correct'}
+            </div>
+            <div style="font-size: 1.25rem; color: var(--text-muted);">
+                ${message}
+            </div>
+        </div>
+    `;
+    
+    showScreen('results');
+}
+
+function exitGame() {
+    clearInterval(state.timer);
+    document.getElementById('timer').classList.add('hidden');
+    showScreen('settings');
+}
+
+function showFeedback(text, type) {
+    const feedback = document.getElementById('feedback');
+    if (feedback) {
+        feedback.innerHTML = text;
+        feedback.className = `feedback ${type}`;
+        feedback.classList.remove('hidden');
+    }
+}
+
+function getCurrentCorrect() {
+    const word = state.sessionWords[state.currentIndex];
+    return getTranslation(word);
+}
+
+function getTranslation(word) {
+    return state.language === 'german' ? 
+        word.german_translation : 
+        (word.english_translation || word.german_translation);
+}
+
+function updateStats() {
+    const verbCount = document.getElementById('verbCount');
+    const currentLang = document.getElementById('currentLang');
+    const currentMode = document.getElementById('currentMode');
+    
+    const t = translations[state.language];
+    
+    if (verbCount) verbCount.textContent = state.vocabulary.length;
+    if (currentLang) currentLang.textContent = state.language === 'german' ? t.german : t.english;
+    if (currentMode) currentMode.textContent = state.deviceMode === 'mobile' ? t.mobile : t.desktop;
+}
+
+function saveSettings() {
+    localStorage.setItem('frenchVerbTrainerSettings', JSON.stringify({
+        language: state.language,
+        theme: state.theme,
+        color: state.color,
+        deviceMode: state.deviceMode,
+        wordCount: state.wordCount
+    }));
+}
+
+function loadSettings() {
+    try {
+        const saved = localStorage.getItem('frenchVerbTrainerSettings');
+        if (saved) {
+            const settings = JSON.parse(saved);
+            
+            if (settings.language) setLanguage(settings.language);
+            if (settings.theme && settings.theme !== state.theme) toggleTheme();
+            if (settings.color) setColor(settings.color);
+            if (settings.deviceMode && settings.deviceMode !== state.deviceMode) toggleDeviceMode();
+            if (settings.wordCount) setWordCount(settings.wordCount);
+        }
+    } catch (error) {
+        console.error('Error loading settings:', error);
+    }
+}
+
+// Utility functions
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+console.log('French Verb Trainer loaded successfully - Mobile optimized for GitHub Pages');
+</script>
+
+</body>
+</html>
