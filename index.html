@@ -52,11 +52,10 @@
   <button id="btn-en" onclick="setLanguage('english')">English</button>
 </header>
 <main id="main-content" style="text-align:center;">
-
 </main>
 
 <script>
-// Verb-Daten mit deutscher und englischer Übersetzung (hier Auszug, erweitern nach Bedarf)
+// Verb-Daten mit deutscher und englischer Übersetzung (kürzerer Auszug, erweitern nach Bedarf)
 const defaultVerbs = [
   {french_verb:"aimer",german_translation:"lieben",english_translation:"love",je:"aime",tu:"aimes",il_elle:"aime",nous:"aimons",vous:"aimez",ils_elles:"aiment"},
   {french_verb:"parler",german_translation:"sprechen",english_translation:"speak",je:"parle",tu:"parles",il_elle:"parle",nous:"parlons",vous:"parlez",ils_elles:"parlent"},
@@ -80,7 +79,6 @@ let state = {
   results: []
 };
 
-// Sprache umschalten
 function setLanguage(lang) {
   state.language = lang;
   document.getElementById('btn-de').classList.toggle('active', lang==='german');
@@ -91,7 +89,6 @@ function setLanguage(lang) {
   showNextConjugation();
 }
 
-// Nächste Konjugation zeigen
 function showNextConjugation() {
   let main = document.getElementById("main-content");
   if(state.currentVerbIndex >= state.vocabulary.length) {
@@ -114,7 +111,6 @@ function showNextConjugation() {
   `;
 }
 
-// Antwort prüfen
 function checkAnswer() {
   let input = document.getElementById("answerInput");
   let answer = input.value.trim().toLowerCase();
@@ -143,7 +139,6 @@ function checkAnswer() {
   },2000);
 }
 
-// Antwort überspringen
 function skipAnswer(){
   state.results.push(false);
   state.currentPronounIndex++;
@@ -154,7 +149,6 @@ function skipAnswer(){
   showNextConjugation();
 }
 
-// Ergebnisse anzeigen
 function showResults(){
   let main = document.getElementById("main-content");
   let correct = state.results.filter(r=>r).length;
@@ -170,7 +164,7 @@ function showResults(){
   `;
 }
 
-// Starte mit Deutsch
+// Starte mit Deutsch als Standard
 setLanguage("german");
 </script>
 </body>
